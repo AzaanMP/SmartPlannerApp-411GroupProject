@@ -15,6 +15,7 @@ struct AddAssignmentView: View {
     @State private var title: String = ""
     @State private var dueDate: Date = Date()
     @State private var snitchNumber: String = "" // Our new Phase 4 field!
+    @State private var priority: Priority = .medium
     
     var body: some View {
         NavigationStack {
@@ -22,6 +23,11 @@ struct AddAssignmentView: View {
                 Section(header: Text("Assignment Details")) {
                     TextField("Title (e.g. History Essay)", text: $title)
                     DatePicker("Final Deadline", selection: $dueDate, displayedComponents: .date)
+                    Picker("Priority", selection: $priority) {
+                        ForEach(Priority.allCases, id: \.self) { level in
+                            Text(level.rawValue).tag(level)
+                        }
+                    }
                 }
                 
                 Section(header: Text("Accountability"), footer: Text("Optional: Enter a friend's phone number. If you slack off, the app will text them to yell at you.")) {
@@ -37,7 +43,7 @@ struct AddAssignmentView: View {
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Save") {
                         // Pass all three pieces of data to your ViewModel
-                        viewModel.addAssignment(title: title, dueDate: dueDate, snitchNumber: snitchNumber)
+                        viewModel.addAssignment(title: title, dueDate: dueDate, snitchNumber: snitchNumber, priority: priority)
                         dismiss()
                     }
                     .disabled(title.isEmpty) // Prevent them from saving blank homework

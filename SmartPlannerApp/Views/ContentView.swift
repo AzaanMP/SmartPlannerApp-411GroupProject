@@ -24,11 +24,25 @@ struct ContentView: View {
                     ForEach(viewModel.assignments) { assignment in
                         NavigationLink(destination: MilestoneDetailView(viewModel: viewModel, assignment: assignment)) {
                             VStack(alignment: .leading) {
-                                Text(assignment.title)
-                                    .font(.headline)
+                                HStack {
+                                    Text(assignment.title)
+                                        .font(.headline)
+                                    Spacer()
+                                    // Color coded priority badge
+                                    Text(assignment.priority.rawValue)
+                                        .font(.caption)
+                                        .bold()
+                                        .padding(.horizontal, 8)
+                                        .padding(.vertical, 3)
+                                        .background(assignment.priority == .high ? Color.red :
+                                                    assignment.priority == .medium ? Color.orange : Color.green)
+                                        .foregroundColor(.white)
+                                        .cornerRadius(8)
+                                }
                                 Text("Due: \(assignment.finalDueDate.formatted(date: .abbreviated, time: .omitted))")
                                     .font(.subheadline)
                                     .foregroundColor(.red)
+                            
                             }
                         }
                     }
