@@ -69,9 +69,24 @@ struct ContentView: View {
                                 Text("Due: \(assignment.finalDueDate.formatted(date: .abbreviated, time: .omitted))")
                                     .font(.subheadline)
                                     .foregroundColor(.red)
-                                Text(assignment.subject.rawValue) 
-                                        .font(.caption)
-                                        .foregroundColor(.blue)
+                                Text(assignment.subject.rawValue)
+                                    .font(.caption)
+                                    .foregroundColor(.blue)
+
+                                // New! Progress bar
+                                let completed = assignment.milestones.filter { $0.isCompleted }.count
+                                let total = assignment.milestones.count
+
+                                if total > 0 {
+                                    VStack(alignment: .leading, spacing: 2) {
+                                        ProgressView(value: Double(completed), total: Double(total))
+                                            .tint(completed == total ? .green : .blue)
+                                        Text("\(completed)/\(total) tasks done")
+                                            .font(.caption2)
+                                            .foregroundColor(.gray)
+                                    }
+                                    .padding(.top, 4)
+                                }
 
                             }
                         }
