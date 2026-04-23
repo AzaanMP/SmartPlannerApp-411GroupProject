@@ -24,8 +24,8 @@ class AssignmentViewModel: ObservableObject {
     }
     
     // The master function to create a new assignment
-    func addAssignment(title: String, dueDate: Date, snitchNumber: String, priority: Priority = .medium, subject: Subject = .general) {        // 1. Ask the DateHelper to do the math
-        let generatedMilestones = DateHelper.generateMilestones(for: title, finalDate: dueDate)
+    func addAssignment(title: String, dueDate: Date, snitchNumber: String, priority: Priority = .medium, subject: Subject = .general, customMilestones: [Milestone]? = nil) {        // 1. Ask the DateHelper to do the math
+        let generatedMilestones = customMilestones ?? DateHelper.generateMilestones(for: title, finalDate: dueDate)
         
         // 2. Package it all together into our Data Model
         let newAssignment = Assignment(
