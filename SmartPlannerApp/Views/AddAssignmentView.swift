@@ -16,6 +16,7 @@ struct AddAssignmentView: View {
     @State private var dueDate: Date = Date()
     @State private var snitchNumber: String = "" // Our new Phase 4 field!
     @State private var priority: Priority = .medium
+    @State private var subject: Subject = .general
     
     var body: some View {
         NavigationStack {
@@ -26,6 +27,11 @@ struct AddAssignmentView: View {
                     Picker("Priority", selection: $priority) {
                         ForEach(Priority.allCases, id: \.self) { level in
                             Text(level.rawValue).tag(level)
+                        }
+                    }
+                    Picker("Subject", selection: $subject) {
+                        ForEach(Subject.allCases, id: \.self) { sub in
+                            Text(sub.rawValue).tag(sub)
                         }
                     }
                 }
@@ -43,7 +49,7 @@ struct AddAssignmentView: View {
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Save") {
                         // Pass all three pieces of data to your ViewModel
-                        viewModel.addAssignment(title: title, dueDate: dueDate, snitchNumber: snitchNumber, priority: priority)
+                        viewModel.addAssignment(title: title, dueDate: dueDate, snitchNumber: snitchNumber, priority: priority, subject: subject)
                         dismiss()
                     }
                     .disabled(title.isEmpty) // Prevent them from saving blank homework

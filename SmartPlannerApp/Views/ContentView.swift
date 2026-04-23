@@ -12,17 +12,44 @@ struct ContentView: View {
     // We use @StateObject here because this is where the ViewModel is officially born
     @StateObject var viewModel = AssignmentViewModel()
     @State private var showingAddSheet = false
+    @State private var selectedSubject: Subject? = nil
     
     var body: some View {
         NavigationStack {
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack {
+                    Button {
+                        selectedSubject = nil
+                    } label: {
+                        Text("All")
+                            .padding(.horizontal, 12)
+                            .padding(.vertical, 6)
+                            .background(selectedSubject == nil ? Color.blue : Color.gray.opacity(0.2))
+                            .foregroundColor(selectedSubject == nil ? .white : .primary)
+                            .cornerRadius(20)
+                    }
+                    ForEach(Subject.allCases, id: \.self) { subject in
+                        Button {
+                            selectedSubject = subject
+                        } label: {
+                            Text(subject.rawValue)
+                                .padding(.horizontal, 12)
+                                .padding(.vertical, 6)
+                                .background(selectedSubject == subject ? Color.blue : Color.gray.opacity(0.2))
+                                .foregroundColor(selectedSubject == subject ? .white : .primary)
+                                .cornerRadius(20)
+                        }
+                    }
+                }
+                .padding(.horizontal)
+            }
             List {
                 if viewModel.assignments.isEmpty {
                     Text("No homework yet. Tap + to add some!")
                         .foregroundColor(.gray)
                 } else {
                     // Loop through the data and create a row for each assignment
-                    ForEach(viewModel.assignments) { assignment in
-                        NavigationLink(destination: MilestoneDetailView(viewModel: viewModel, assignment: assignment)) {
+                    ForEach(viewModel.assignments.filter { selectedSubject == nil || $0.subject == selectedSubject }) { assignment in                        NavigationLink(destination: MilestoneDetailView(viewModel: viewModel, assignment: assignment)) {
                             VStack(alignment: .leading) {
                                 HStack {
                                     Text(assignment.title)
@@ -42,7 +69,10 @@ struct ContentView: View {
                                 Text("Due: \(assignment.finalDueDate.formatted(date: .abbreviated, time: .omitted))")
                                     .font(.subheadline)
                                     .foregroundColor(.red)
-                            
+                                Text(assignment.subject.rawValue) 
+                                        .font(.caption)
+                                        .foregroundColor(.blue)
+
                             }
                         }
                     }
