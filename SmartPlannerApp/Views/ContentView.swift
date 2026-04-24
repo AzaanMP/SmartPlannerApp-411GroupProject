@@ -7,13 +7,14 @@
 
 import SwiftUI
 
-
 struct ContentView: View {
-    // We use @StateObject here because this is where the ViewModel is officially born
     @StateObject var viewModel = AssignmentViewModel()
     @State private var showingAddSheet = false
     @State private var selectedSubject: Subject? = nil
     
+    // New! Tracks the current color scheme preference
+    @State private var colorScheme: ColorScheme? = nil
+
     var body: some View {
         NavigationStack {
             ScrollView(.horizontal, showsIndicators: false) {
@@ -48,14 +49,13 @@ struct ContentView: View {
                     Text("No homework yet. Tap + to add some!")
                         .foregroundColor(.gray)
                 } else {
-                    // Loop through the data and create a row for each assignment
-                    ForEach(viewModel.assignments.filter { selectedSubject == nil || $0.subject == selectedSubject }) { assignment in                        NavigationLink(destination: MilestoneDetailView(viewModel: viewModel, assignment: assignment)) {
+                    ForEach(viewModel.assignments.filter { selectedSubject == nil || $0.subject == selectedSubject }) { assignment in
+                        NavigationLink(destination: MilestoneDetailView(viewModel: viewModel, assignment: assignment)) {
                             VStack(alignment: .leading) {
                                 HStack {
                                     Text(assignment.title)
                                         .font(.headline)
                                     Spacer()
-                                    // Color coded priority badge
                                     Text(assignment.priority.rawValue)
                                         .font(.caption)
                                         .bold()
@@ -73,7 +73,6 @@ struct ContentView: View {
                                     .font(.caption)
                                     .foregroundColor(.blue)
 
-                                // New! Progress bar
                                 let completed = assignment.milestones.filter { $0.isCompleted }.count
                                 let total = assignment.milestones.count
 
@@ -87,11 +86,9 @@ struct ContentView: View {
                                     }
                                     .padding(.top, 4)
                                 }
-
                             }
                         }
                     }
-                    // Swipe to delete feature!
                     .onDelete { indexSet in
                         viewModel.assignments.remove(atOffsets: indexSet)
                     }
@@ -99,6 +96,24 @@ struct ContentView: View {
             }
             .navigationTitle("Smart Planner")
             .toolbar {
+                // New! Dark/Light mode toggle on the left
+                ToolbarItem(placement: .navigationBarLeading) {
+                    Button {
+                        switch colorScheme {
+                        case .none:
+                            colorScheme = .light
+                        case .light:
+                            colorScheme = .dark
+                        case .dark:
+                            colorScheme = .none
+                        default:
+                            colorScheme = .none
+                        }
+                    } label: {
+                        Image(systemName: colorScheme == .dark ? "moon.fill" :
+                                          colorScheme == .light ? "sun.max.fill" : "circle.lefthalf.filled")
+                    }
+                }
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button {
                         showingAddSheet = true
@@ -111,13 +126,13 @@ struct ContentView: View {
                 AddAssignmentView(viewModel: viewModel)
             }
             .onAppear {
-                // The absolute first time the app opens, ask for notification permissions
                 NotificationManager.shared.requestPermission()
             }
         }
+        // New! Applies the color scheme to the entire app
+        .preferredColorScheme(colorScheme)
     }
 }
-
 
 #Preview {
     ContentView()
