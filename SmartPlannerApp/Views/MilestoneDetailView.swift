@@ -8,14 +8,22 @@
 import SwiftUI
 import MessageUI
 
+// 1. Create a router to safely handle multiple popups
+enum ActiveSheet: Identifiable {
+    case timer
+    case snitch
+    
+    var id: Int { hashValue }
+}
 
 struct MilestoneDetailView: View {
     @ObservedObject var viewModel: AssignmentViewModel
     var assignment: Assignment
     
-    @State private var showingTimer = false
-    @State private var showingSnitch = false
+    // 2. Replace the two booleans with our single active sheet state
+    @State private var activeSheet: ActiveSheet? = nil
     @State private var selectedMilestoneName = ""
+    @State private var showTextError = false // For unsupported devices
     
     var body: some View {
         List {
@@ -23,7 +31,7 @@ struct MilestoneDetailView: View {
                 ForEach(assignment.milestones) { milestone in
                     VStack(alignment: .leading, spacing: 10) {
                         
-                        // 1. The Checkbox Row
+                        // Checkbox Row
                         HStack {
                             Image(systemName: milestone.isCompleted ? "checkmark.circle.fill" : "circle")
                                 .foregroundColor(milestone.isCompleted ? .green : .gray)
@@ -39,13 +47,13 @@ struct MilestoneDetailView: View {
                             }
                         }
                         
-                        // 2. The Phase 4 Action Buttons (Only show if task isn't done!)
+                        // Action Buttons
                         if !milestone.isCompleted {
                             HStack {
                                 // Timer Button
                                 Button {
                                     selectedMilestoneName = milestone.title
-                                    showingTimer = true
+                                    activeSheet = .timer
                                 } label: {
                                     Label("Focus", systemImage: "timer")
                                 }
@@ -54,11 +62,16 @@ struct MilestoneDetailView: View {
                                 
                                 Spacer()
                                 
-                                // Snitch Button (Only show if they typed a number in the form)
+                                // Snitch Button
                                 if !assignment.snitchPhoneNumber.isEmpty {
                                     Button {
                                         selectedMilestoneName = milestone.title
-                                        showingSnitch = true
+                                        // 3. The Heavy check is now safely inside the button action!
+                                        if MFMessageComposeViewController.canSendText() {
+                                            activeSheet = .snitch
+                                        } else {
+                                            showTextError = true
+                                        }
                                     } label: {
                                         Label("Confess", systemImage: "message.fill")
                                     }
@@ -75,47 +88,40 @@ struct MilestoneDetailView: View {
         }
         .navigationTitle(assignment.title)
         
-        // Present the Timer Popup
-        .sheet(isPresented: $showingTimer) {
-            PomodoroTimerView(milestoneTitle: selectedMilestoneName)
-        }
-        
-        // Present the Texting Popup
-        .sheet(isPresented: $showingSnitch) {
-            if MFMessageComposeViewController.canSendText() {
+        // 4. A single, clean sheet modifier routes both views
+        .sheet(item: $activeSheet) { sheet in
+            switch sheet {
+            case .timer:
+                PomodoroTimerView(milestoneTitle: selectedMilestoneName)
+            case .snitch:
                 MessageComposeView(
                     recipients: [assignment.snitchPhoneNumber],
                     body: "I am procrastinating on my \(selectedMilestoneName) and need you to yell at me to get back to work."
                 )
-            } else {
-                Text("Texting is not supported on this device. You need to plug in a real iPhone to test this!")
-                    .padding()
-                    .multilineTextAlignment(.center)
             }
+        }
+        
+        // Failsafe for the Simulator
+        .alert("Texting Not Supported", isPresented: $showTextError) {
+            Button("OK", role: .cancel) { }
+        } message: {
+            Text("You need to run this on a physical iPhone to send texts.")
         }
     }
 }
 
 #Preview {
-    // 1. Create some fake tasks just for the visual preview
     let fakeMilestones = [
         Milestone(title: "Outline", dueDate: Date(), isCompleted: true),
         Milestone(title: "Draft", dueDate: Date(), isCompleted: false)
     ]
-    
-    // 2. Package them into a fake assignment
     let fakeAssignment = Assignment(
         title: "Test History Essay",
         finalDueDate: Date(),
         milestones: fakeMilestones,
         snitchPhoneNumber: "555-555-5555"
     )
-    
-    // 3. Hand the fake data to the view so the Canvas can draw it
-    // We wrap it in a NavigationStack so the top title bar shows up correctly!
     return NavigationStack {
         MilestoneDetailView(viewModel: AssignmentViewModel(), assignment: fakeAssignment)
     }
 }
-
-
